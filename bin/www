@@ -3,11 +3,14 @@
 /**
  * Module dependencies.
  */
+const THModel = require("../models/th.model");
+const Led = require("../status/led");
 
 var app = require("../app");
 var debug = require("debug")("socket-server:server");
 var http = require("http");
-const { Socket } = require("socket.io");
+
+var WebSocket = require("ws");
 
 /**
  * Get port from environment and store in Express.
@@ -21,13 +24,13 @@ app.set("port", port);
  */
 
 var server = http.createServer(app);
-const options = {
-};
-const io = require("socket.io")(server, options);
+// const options = {
+// };
+// const io = require("socket.io")(server, options);
 
-io.on("connection", (socket) => {
-  socket.emit("mgs", "hello");
-});
+// io.on("connection", (socket) => {
+//   socket.emit("mgs", "hello");
+// });
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -36,6 +39,52 @@ io.on("connection", (socket) => {
 server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
+
+var ws = new WebSocket.Server({
+  server,
+});
+var clients = [];
+
+function broadcast(socket, data) {
+  console.log(clients.length);
+  for (var i = 0; i < clients.length; i++) {
+    clients[i].send(data);
+  }
+}
+ws.on("connection",async function (socket, req) {
+  clients.push(socket);
+
+  var thData = await THModel.getTop("5fa7dee2d608ce50b8057128");
+  const thString = JSON.stringify(thData);
+  console.log(thString);
+  socket.send(thString);
+  socket.send(Led.getLedStatus());
+  console.log("A new connection");
+  socket.on("message",async function (message) {
+    if (message === "LED_OFF") {
+      Led.setLedStatus(message);
+      broadcast(socket, message);
+    }
+    if (message === "LED_ON") {
+      Led.setLedStatus(message);
+      broadcast(socket, message);
+    }
+    try {
+      const messageJson = JSON.parse(String(message));
+      console.log(messageJson);
+      messageJson.id = "5fa7dee2d608ce50b8057128";
+      messageJson.date = Date.now();
+      console.log(messageJson);
+      await THModel.add(messageJson);
+      broadcast(socket, message);
+    } catch (error) {}
+  });
+  socket.on("close", function () {
+    var index = clients.indexOf(socket);
+    clients.splice(index, 1);
+    console.log("disconnected");
+  });
+});
 
 /**
  * Normalize a port into a number, string, or false.

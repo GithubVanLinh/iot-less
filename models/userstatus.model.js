@@ -3,7 +3,9 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const userStatusSchema = new Schema({
-  Status: Number,
+  username: String,
+  password: String,
+  status: Number,
   id: String,
 });
 

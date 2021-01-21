@@ -13,4 +13,9 @@ module.exports = {
     const THData = await query.exec();
     return THData;
   },
+  getTop: async (id) =>{
+    var query = THService.findOne({ id: id }, null, { limit: 1, sort: { date: -1 } });
+    const THData = await query.exec();
+    return THData;
+  }
 };

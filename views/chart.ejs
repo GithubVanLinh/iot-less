@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/javascripts/bundle.js"></script>
+  </head>
+  <body>
+    <div>
+      <div>
+        Temperature:
+        <span id="temperature"></span>
+        *C
+      </div>
+      &nbsp;
+      <div>
+        Humidity:
+        <span id="humidity"></span>
+        %
+      </div>
+      &nbsp;
+      <div>Last update: <span id="date"></span></div>
+    </div>
+
+    <canvas id="temperatureChart" width="600px" height="200px"></canvas>
+    <canvas id="humidityChart" width="600px" height="200px"></canvas>
+    <script>
+      const temperature = document.getElementById("temperature");
+      const humidity = document.getElementById("humidity");
+      const date = document.getElementById("date");
+
+      var chart = require("chart.js");
+
+      function drawChart(ctx, data, lable) {
+        const myLineChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: lable,
+            datasets: [
+              {
+                label: "# of Votes",
+                data: data,
+                backgroundColor: ["rgba(10, 99, 132, 0.2)"],
+                borderColor: ["rgba(255, 99, 10, 1)"],
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            animation: {
+              duration: 0,
+            },
+          },
+        });
+      }
+      function localDate(UTCDate) {
+        let datedata;
+        console.log(UTCDate);
+        try {
+          datedata = new Date(UTCDate);
+        } catch (err) {
+          console.log(err);
+        }
+        const y = datedata.getFullYear();
+        const m = datedata.getMonth() + 1;
+        const d = datedata.getDate();
+        const h = datedata.getHours();
+        const min = datedata.getMinutes();
+        const s = datedata.getSeconds();
+        const ms = datedata.getMilliseconds();
+        const newdate =
+          h + ":" + min + ":" + s + ":" + ms + " " + d + "/" + m + "/" + y;
+        console.log(newdate);
+        return newdate;
+      }
+
+      const temperatureContext = document
+        .getElementById("temperatureChart")
+        .getContext("2d");
+      const humidityContext = document
+        .getElementById("humidityChart")
+        .getContext("2d");
+      function loadData() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            const data = JSON.parse(this.responseText);
+            const temperatureData = [];
+            const humidityData = [];
+            const dateData = [];
+            for (entity of data) {
+              temperatureData.push(entity.temperature);
+              humidityData.push(entity.humidity);
+              dateData.push(localDate(entity.date));
+            }
+            const lableChart = [];
+            for (i = 0; i < 10; i++) {
+              lableChart.push(dateData[i * 10]);
+            }
+            lableChart.push();
+            drawChart(temperatureContext, temperatureData, dateData);
+            drawChart(humidityContext, humidityData, dateData);
+
+            temperature.innerText = temperatureData[0];
+            humidity.innerText = humidityData[0];
+            console.log(data[0].date);
+            date.innerText = dateData[0];
+          }
+        };
+        xhttp.open("GET", "/apis/sensors", true);
+        xhttp.send();
+      }
+
+      loadData();
+      setInterval(loadData, 60000);
+    </script>
+  </body>
+</html>
