@@ -6,16 +6,15 @@
 const THModel = require("../models/th.model");
 const Led = require("../status/led");
 
-const path = require('path');
-
 var app = require("../app");
 var debug = require("debug")("socket-server:server");
-var https = require("https");
-const fs = require('fs');
-const options = {
-  key: fs.readFileSync(path.resolve('./localdomain.insecure.key')),
-  cert: fs.readFileSync(path.resolve('./localdomain.crt')),
-};
+var http = require('http');
+// var https = require("https");
+// const fs = require('fs');
+// const options = {
+//   key: fs.readFileSync('key.pem'),
+//   cert: fs.readFileSync('cert.pem')
+// };
 var WebSocket = require("ws");
 
 /**
@@ -28,8 +27,8 @@ app.set("port", port);
 /**
  * Create HTTP server.
  */
-var server = https.createServer(options, app);
-// var server = http.createServer(app);
+// var server = https.createServer(options, app);
+var server = http.createServer(app);
 // const options = {
 // };
 // const io = require("socket.io")(server, options);

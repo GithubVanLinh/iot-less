@@ -53,8 +53,13 @@
       var led = document.getElementById("led");
       const temperature = document.getElementById("temperature");
       const humidity = document.getElementById("humidity");
-      var url = window.location.host; // hàm trả về url của trang hiện tại kèm theo port
-      var ws = new WebSocket("wss://" + url + "/ws"); // mở 1 websocket với port 8000
+
+
+      var HOST = location.origin.replace(/^http/, 'ws');
+      var ws = new WebSocket(HOST);
+      
+      // var url = window.location.host; // hàm trả về url của trang hiện tại kèm theo port
+      // var ws = new WebSocket("ws://" + url + "/ws"); // mở 1 websocket với port 8000
       console.log("connecting...");
       ws.onopen = function () //khi websocket được mở thì hàm này sẽ được thưc hiện
       {
