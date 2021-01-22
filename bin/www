@@ -8,7 +8,7 @@ const Led = require("../status/led");
 
 var app = require("../app");
 var debug = require("debug")("socket-server:server");
-var http = require('http');
+var http = require("http");
 // var https = require("https");
 // const fs = require('fs');
 // const options = {
@@ -56,7 +56,7 @@ function broadcast(socket, data) {
     clients[i].send(data);
   }
 }
-ws.on("connection",async function (socket, req) {
+ws.on("connection", async function (socket, req) {
   clients.push(socket);
 
   var thData = await THModel.getTop("5fa7dee2d608ce50b8057128");
@@ -65,7 +65,7 @@ ws.on("connection",async function (socket, req) {
   socket.send(thString);
   socket.send(Led.getLedStatus());
   console.log("A new connection");
-  socket.on("message",async function (message) {
+  socket.on("message", async function (message) {
     console.log(message);
     if (message === "LED_OFF") {
       Led.setLedStatus(message);
@@ -77,12 +77,14 @@ ws.on("connection",async function (socket, req) {
     }
     try {
       const messageJson = JSON.parse(String(message));
-      console.log(messageJson);
-      messageJson.id = "5fa7dee2d608ce50b8057128";
-      messageJson.date = Date.now();
-      console.log(messageJson);
-      await THModel.add(messageJson);
-      broadcast(socket, message);
+      if (messageJson.temperature && messageJson.humidity) {
+        console.log(messageJson);
+        messageJson.id = "5fa7dee2d608ce50b8057128";
+        messageJson.date = Date.now();
+        console.log(messageJson);
+        await THModel.add(messageJson);
+        broadcast(socket, message);
+      }
     } catch (error) {}
   });
   socket.on("close", function () {
